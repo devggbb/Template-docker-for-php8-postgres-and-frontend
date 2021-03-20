@@ -1,0 +1,50 @@
+version: "3.9"
+
+services:
+  backend:
+    build:
+      context: ./services/backend
+    container_name: ${APP_NAME}-backend
+    depends_on:
+      - postgres
+    links:
+      - postgres
+    volumes:
+      - ./app/backend:/var/www/backend
+    ports:
+      - 9000:9000
+
+  frontend:
+    build:
+      context: ./services/frontend
+    container_name: ${APP_NAME}-frontend
+    tty: true
+    links:
+      - backend
+    volumes:
+      - ./app/frontend:/var/www/frontend
+
+  nginx:
+    build:
+      context: ./services/nginx
+    container_name: ${APP_NAME}-nginx
+    links:
+      - backend
+    ports:
+      - 80:80
+    volumes:
+      - ./services/nginx/etc/nginx/conf.d/:/etc/nginx/conf.d/
+      - ./app/backend:/var/www/backend
+
+  postgres:
+    build:
+      context: ./services/postgres
+    container_name: ${APP_NAME}-postgres
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    volumes:
+      - ./var/postgres/data:/var/lib/postgresql/data:z
+    ports:
+      - 5432:5432
